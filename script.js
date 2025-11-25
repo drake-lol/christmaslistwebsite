@@ -105,7 +105,6 @@ function applyTheme() {
   const stickyNav = document.querySelector('.sticky-nav');
   if(stickyNav) {
       stickyNav.style.backgroundColor = bodyBg;
-      // REMOVED shadow from transition
       stickyNav.style.transition = isFirstLoad ? 'none' : 'background-color 1s ease';
   }
 
@@ -185,18 +184,21 @@ const observer = new IntersectionObserver(entries => {
 document.querySelectorAll('.item').forEach(el => observer.observe(el));
 
 
-// --- 4. Fluid Scroll Animation (No Shadow) ---
+// --- 4. Fluid Scroll Animation (Shrunk Desktop Height) ---
 
 const nav = document.querySelector('.sticky-nav');
 
 // CONFIGURATION
 const MAX_HEIGHT_DESKTOP = 220; 
-const MIN_HEIGHT_DESKTOP = 110; 
+
+// CHANGED: Reduced from 110 to 82 (75%)
+const MIN_HEIGHT_DESKTOP = 82; 
 
 const MAX_HEIGHT_MOBILE = 160; 
 const MIN_HEIGHT_MOBILE = 90;
 
-const SCROLL_RANGE = 50; 
+const SCROLL_RANGE_DESKTOP = 100;
+const SCROLL_RANGE_MOBILE = 50;
 
 function updateNavHeight() {
   const scrollY = window.scrollY;
@@ -205,8 +207,10 @@ function updateNavHeight() {
   const startHeight = isDesktop ? MAX_HEIGHT_DESKTOP : MAX_HEIGHT_MOBILE;
   const endHeight = isDesktop ? MIN_HEIGHT_DESKTOP : MIN_HEIGHT_MOBILE;
   
+  const scrollRange = isDesktop ? SCROLL_RANGE_DESKTOP : SCROLL_RANGE_MOBILE;
+  
   // Calculate percentage of scroll (0.0 to 1.0)
-  let progress = Math.min(scrollY / SCROLL_RANGE, 1);
+  let progress = Math.min(scrollY / scrollRange, 1);
   progress = Math.max(progress, 0);
   
   // Interpolate Height
@@ -214,8 +218,6 @@ function updateNavHeight() {
   
   // Apply Height
   nav.style.height = `${currentHeight}px`;
-  
-  // REMOVED: Shadow logic deleted here
 }
 
 // Attach to scroll and resize
