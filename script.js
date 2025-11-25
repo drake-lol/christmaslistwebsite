@@ -189,52 +189,48 @@ const observer = new IntersectionObserver(entries => {
 document.querySelectorAll('.item').forEach(el => observer.observe(el));
 
 
-// --- 4. Fluid Scroll Animation (Dynamic Height) ---
+// --- 4. Fluid Scroll Animation (Fixed Top, Dynamic Bottom) ---
 
 const nav = document.querySelector('.sticky-nav');
 const titleEl = nav.querySelector('h1');
 
-// We will calculate these based on the actual title text size
-let startHeight = 0;
-let endHeight = 0;
-
-// Configuration for PADDING around the text
-const PADDING_TOP_EXPANDED = 150; // Breathing room when at top
-const PADDING_TOP_COLLAPSED = 40; // Tight room when scrolled down
+// FIXED START HEIGHTS (The "Expanded" State)
+// These do not change based on text wrap to preserve the Hero layout.
+const START_HEIGHT_DESKTOP = 220;
+const START_HEIGHT_MOBILE = 160;
 
 const SCROLL_RANGE_DESKTOP = 100;
 const SCROLL_RANGE_MOBILE = 50;
 
-function calculateDimensions() {
-  // 1. Get the actual height of the H1 text (works even if wrapped)
-  const titleHeight = titleEl.offsetHeight;
-  
-  // 2. Add padding to define our Start/End states
-  startHeight = titleHeight + PADDING_TOP_EXPANDED;
-  endHeight = titleHeight + PADDING_TOP_COLLAPSED;
-  
-  // Force an update immediately so it doesn't wait for scroll
-  updateNavHeight();
-}
-
 function updateNavHeight() {
   const scrollY = window.scrollY;
   const isDesktop = window.innerWidth > 1024;
+  
+  // 1. Determine Start Height (Fixed)
+  const startHeight = isDesktop ? START_HEIGHT_DESKTOP : START_HEIGHT_MOBILE;
+  
+  // 2. Determine End Height (Dynamic)
+  // We measure the text height and add padding so it doesn't get cut off.
+  const titleHeight = titleEl.offsetHeight;
+  const paddingBuffer = 40; // 20px top + 20px bottom padding
+  const endHeight = titleHeight + paddingBuffer;
+  
+  // 3. Determine Range
   const scrollRange = isDesktop ? SCROLL_RANGE_DESKTOP : SCROLL_RANGE_MOBILE;
   
-  // Calculate percentage of scroll (0.0 to 1.0)
+  // 4. Calculate Progress
   let progress = Math.min(scrollY / scrollRange, 1);
   progress = Math.max(progress, 0);
   
-  // Interpolate Height based on dynamic values
+  // 5. Interpolate
   const currentHeight = startHeight - (progress * (startHeight - endHeight));
   nav.style.height = `${currentHeight}px`;
 }
 
-// Recalculate dimensions on load and resize (in case text wraps differently)
-window.addEventListener('load', calculateDimensions);
-window.addEventListener('resize', calculateDimensions);
+// Recalculate on load/resize/scroll
+window.addEventListener('load', updateNavHeight);
+window.addEventListener('resize', updateNavHeight);
 window.addEventListener('scroll', updateNavHeight);
 
 // Initial call
-calculateDimensions();
+updateNavHeight();
