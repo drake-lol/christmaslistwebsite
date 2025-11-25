@@ -1,16 +1,13 @@
-// --- 0. Extension Protection (Run Immediately) ---
-// This injects a special meta tag that tells Dark Reader to disable itself for this site
+// --- 0. Extension Protection ---
 const metaLock = document.createElement('meta');
 metaLock.name = "darkreader-lock";
 document.head.appendChild(metaLock);
 
-// This tells the browser your site supports both modes natively
 const metaScheme = document.createElement('meta');
 metaScheme.name = "color-scheme";
 metaScheme.content = "light dark";
 document.head.appendChild(metaScheme);
 
-// Force the CSS property as well
 document.documentElement.style.colorScheme = 'light dark';
 
 
@@ -105,14 +102,17 @@ function applyTheme() {
       document.body.style.color = '#000000';
   }
 
-  // --- Title Logic ---
+  // --- STRICT CHRISTMAS RED TITLE LOGIC ---
+  // I updated this to ensure it never falls back to gray
   const title = document.querySelector('.title, h1');
   if(title) {
       if(isDark) {
-          title.style.backgroundColor = '#3b0e0e'; // Deep Crimson
+          // Dark Mode: Dark Christmas Red
+          title.style.backgroundColor = '#590a0a'; 
           title.style.color = '#ffffff'; 
       } else {
-          title.style.backgroundColor = '#ffdadb'; // Pale Candy Red
+          // Light Mode: Bright Candy Red
+          title.style.backgroundColor = '#ffcccc'; 
           title.style.color = '#000000'; 
       }
       

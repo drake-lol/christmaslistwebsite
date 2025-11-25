@@ -3,6 +3,8 @@ body {
   margin: 0;
   padding: 0;
   font-family: Arial, sans-serif;
+  /* Smooth transition for dark mode toggles */
+  transition: background-color 1s ease, color 1s ease;
 }
 
 .frame {
@@ -10,14 +12,15 @@ body {
   padding: 20px;
 }
 
+/* Title styles (Colors are handled by JS for Christmas theme) */
 .frame h1 {
   display: inline-block;
-  background-color: #ffcccc;
   border-radius: 9999px;
   padding: 8px 16px;
   margin: 0 auto 20px auto;
   font-size: 2rem;
   text-align: center;
+  transition: background-color 1s ease, color 1s ease;
 }
 
 ul { list-style: none; padding: 0; margin: 0; }
@@ -26,17 +29,19 @@ ul { list-style: none; padding: 0; margin: 0; }
   margin-bottom: 30px;
   position: relative;
   padding: 20px;
-  border-radius: 12px;
-  transition: background 0.5s ease;
+  border-radius: 30px; /* Rounded corners as requested */
+  transition: background-color 1s ease, opacity 0.5s ease, transform 0.5s ease;
   overflow: hidden;
 }
 
+/* Main Flex Container */
 .slide-container {
   display: flex;
   align-items: center;
   gap: 20px;
 }
 
+/* Desktop Reverse Layout */
 .item.align-right .slide-container { flex-direction: row-reverse; }
 
 .image-wrapper {
@@ -57,7 +62,7 @@ ul { list-style: none; padding: 0; margin: 0; }
   position: absolute;
   top: 0; left: 0;
   z-index: 0;
-  opacity: 0.4;
+  opacity: 0.5; /* Updated to 0.5 per request */
   animation: rotateShape 20s linear infinite;
 }
 
@@ -80,7 +85,7 @@ ul { list-style: none; padding: 0; margin: 0; }
   flex-direction: column;
 }
 
-/* Default Desktop Alignments */
+/* Desktop Button Alignment */
 .item:not(.align-right) .buy-button { align-self: flex-start; }
 .item.align-right .buy-button { align-self: flex-end; }
 .item.align-right .text { text-align: right; }
@@ -101,7 +106,7 @@ ul { list-style: none; padding: 0; margin: 0; }
   color: white;
   border-radius: 9999px;
   white-space: nowrap;
-  transition: background 0.5s ease;
+  transition: background 0.5s ease, opacity 0.2s ease;
 }
 .buy-button:hover { opacity: 0.85; }
 
@@ -114,44 +119,49 @@ ul { list-style: none; padding: 0; margin: 0; }
   margin-right: 16px;
 }
 
+/* Scroll Animation States */
 .fade-in { opacity: 0; transition: opacity 1s ease; }
 .slide-in-left, .slide-in-right { opacity: 0; transition: transform 0.8s ease, opacity 0.8s ease; }
 .slide-in-left { transform: translateX(-40px); }
 .slide-in-right { transform: translateX(40px); }
+
+/* Visible States */
 .visible.slide-in-left, .visible.slide-in-right { transform: translateX(0); opacity: 1; }
 .visible.fade-in { opacity: 1; }
 
-/* --- MOBILE MODE --- */
-@media (max-width: 768px) {
-  /* Stack everything vertically */
+/* --- MOBILE & TABLET LAYOUT (Max-Width 1024px) --- */
+@media (max-width: 1024px) {
+  
+  /* Force Vertical Layout & Center Everything */
   .slide-container,
   .item.align-right .slide-container {
-    flex-direction: column; 
-    text-align: center;
+    display: flex !important;
+    flex-direction: column !important; 
+    align-items: center !important;
+    text-align: center !important;
+    gap: 20px !important;
   }
 
-  /* Reset alignment for right-aligned items */
-  .item.align-right .text { 
-    text-align: center; 
+  /* Reset Text Alignments */
+  .item.align-right .text, 
+  .item .text { 
+    text-align: center !important; 
+    align-items: center !important;
+    width: 100% !important;
   }
 
-  /* Center the content inside the text block */
-  .text {
-    align-items: center;
-    width: 100%;
-  }
-
-  /* Force buttons to the center for both layouts */
+  /* Force Button to Center */
   .item:not(.align-right) .buy-button,
   .item.align-right .buy-button {
-    align-self: center;
+    align-self: center !important;
+    margin: 10px auto 0 auto !important;
   }
 
-  /* Adjust image spacing and size for mobile */
+  /* Adjust Image Size */
   .image-wrapper {
-    width: 60%; /* Make image larger on mobile relative to container */
-    height: auto;
-    aspect-ratio: 1 / 1;
-    margin-bottom: 20px;
+    width: 70% !important;
+    height: auto !important;
+    aspect-ratio: 1 / 1 !important;
+    margin-bottom: 10px;
   }
 }
