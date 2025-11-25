@@ -99,10 +99,13 @@ function applyTheme() {
   const bodyBg = isDark ? '#121212' : '#ffffff';
   const bodyColor = isDark ? '#ffffff' : '#000000';
   
+  // Update the CSS variable so the Inverted Corners match the header color
   document.documentElement.style.setProperty('--nav-bg', bodyBg);
   
   document.body.style.backgroundColor = bodyBg;
   document.body.style.color = bodyColor;
+  
+  // Prevent flash on load
   document.body.style.transition = isFirstLoad ? 'none' : 'background-color 1s ease, color 1s ease';
 
   // B. Sticky Nav
@@ -139,6 +142,8 @@ function applyTheme() {
     }
 
     item.style.color = getContrastTextColor(finalBg);
+    
+    // Logic: If first load, only keep scroll animations. If theme switch, include background transition.
     const scrollTrans = "opacity 0.5s ease, transform 0.5s ease";
     item.style.transition = isFirstLoad ? scrollTrans : `background-color 1s ease, ${scrollTrans}`;
 
@@ -189,48 +194,51 @@ const observer = new IntersectionObserver(entries => {
 document.querySelectorAll('.item').forEach(el => observer.observe(el));
 
 
-// --- 4. Fluid Scroll Animation (Fixed Top, Dynamic Bottom) ---
+// --- 4. Fluid Scroll Animation & Dynamic Spacing ---
 
 const nav = document.querySelector('.sticky-nav');
 const titleEl = nav.querySelector('h1');
+const frame = document.querySelector('.frame');
 
 // FIXED START HEIGHTS (The "Expanded" State)
-// These do not change based on text wrap to preserve the Hero layout.
 const START_HEIGHT_DESKTOP = 220;
 const START_HEIGHT_MOBILE = 160;
 
 const SCROLL_RANGE_DESKTOP = 100;
 const SCROLL_RANGE_MOBILE = 50;
 
-function updateNavHeight() {
+function updateLayout() {
   const scrollY = window.scrollY;
   const isDesktop = window.innerWidth > 1024;
   
-  // 1. Determine Start Height (Fixed)
+  // 1. Determine Start Height
   const startHeight = isDesktop ? START_HEIGHT_DESKTOP : START_HEIGHT_MOBILE;
   
-  // 2. Determine End Height (Dynamic)
-  // We measure the text height and add padding so it doesn't get cut off.
+  // 2. Determine End Height (Dynamic based on text wrap)
   const titleHeight = titleEl.offsetHeight;
-  const paddingBuffer = 40; // 20px top + 20px bottom padding
+  const paddingBuffer = 40; // 20px top + 20px bottom inside header
   const endHeight = titleHeight + paddingBuffer;
   
-  // 3. Determine Range
+  // 3. Calculate Header Height
   const scrollRange = isDesktop ? SCROLL_RANGE_DESKTOP : SCROLL_RANGE_MOBILE;
-  
-  // 4. Calculate Progress
   let progress = Math.min(scrollY / scrollRange, 1);
   progress = Math.max(progress, 0);
   
-  // 5. Interpolate
   const currentHeight = startHeight - (progress * (startHeight - endHeight));
   nav.style.height = `${currentHeight}px`;
+
+  // 4. DYNAMIC CONTENT PADDING
+  // Ensures the content is always pushed down enough so it's not hidden.
+  // We use the MAX of startHeight or endHeight to be safe against large text wrapping.
+  // Added +20px for the gap you requested.
+  const safePadding = Math.max(startHeight, endHeight) + 20; 
+  frame.style.paddingTop = `${safePadding}px`;
 }
 
 // Recalculate on load/resize/scroll
-window.addEventListener('load', updateNavHeight);
-window.addEventListener('resize', updateNavHeight);
-window.addEventListener('scroll', updateNavHeight);
+window.addEventListener('load', updateLayout);
+window.addEventListener('resize', updateLayout);
+window.addEventListener('scroll', updateLayout);
 
 // Initial call
-updateNavHeight();
+updateLayout();
