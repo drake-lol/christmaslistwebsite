@@ -1,9 +1,23 @@
+/* --- 0. Extension Protection --- */
+:root {
+  color-scheme: light dark;
+}
+
+/* --- 1. Base Settings (The "Uniquifier" Logic applied globally) --- */
 body {
   background: #ffffff;
   margin: 0;
   padding: 0;
-  font-family: Arial, sans-serif;
-  /* Smooth transition for dark mode toggles */
+  
+  /* Use the exact family name from your snippet */
+  font-family: "Google Sans Flex", arial, sans-serif;
+  
+  /* Default Body Text Settings */
+  font-optical-sizing: auto;
+  font-weight: 400; /* Normal weight for paragraphs */
+  font-style: normal;
+  font-variation-settings: "slnt" 0, "wdth" 100, "GRAD" 0, "ROND" 0; /* No roundness on body text */
+  
   transition: background-color 1s ease, color 1s ease;
 }
 
@@ -12,7 +26,7 @@ body {
   padding: 20px;
 }
 
-/* Title styles (Colors are handled by JS for Christmas theme) */
+/* --- Page Title --- */
 .frame h1 {
   display: inline-block;
   border-radius: 9999px;
@@ -21,6 +35,14 @@ body {
   font-size: 2rem;
   text-align: center;
   transition: background-color 1s ease, color 1s ease;
+  
+  /* Applying your bold/round settings here too */
+  font-weight: 800;
+  font-variation-settings:
+    "slnt" 0,
+    "wdth" 100,
+    "GRAD" 0,
+    "ROND" 100;
 }
 
 ul { list-style: none; padding: 0; margin: 0; }
@@ -29,19 +51,17 @@ ul { list-style: none; padding: 0; margin: 0; }
   margin-bottom: 30px;
   position: relative;
   padding: 20px;
-  border-radius: 30px; /* Rounded corners as requested */
+  border-radius: 30px;
   transition: background-color 1s ease, opacity 0.5s ease, transform 0.5s ease;
   overflow: hidden;
 }
 
-/* Main Flex Container */
 .slide-container {
   display: flex;
   align-items: center;
   gap: 20px;
 }
 
-/* Desktop Reverse Layout */
 .item.align-right .slide-container { flex-direction: row-reverse; }
 
 .image-wrapper {
@@ -62,7 +82,7 @@ ul { list-style: none; padding: 0; margin: 0; }
   position: absolute;
   top: 0; left: 0;
   z-index: 0;
-  opacity: 0.5; /* Updated to 0.5 per request */
+  opacity: 0.5;
   animation: rotateShape 20s linear infinite;
 }
 
@@ -85,13 +105,42 @@ ul { list-style: none; padding: 0; margin: 0; }
   flex-direction: column;
 }
 
-/* Desktop Button Alignment */
 .item:not(.align-right) .buy-button { align-self: flex-start; }
 .item.align-right .buy-button { align-self: flex-end; }
 .item.align-right .text { text-align: right; }
 
-.text h3 { font-size: 1.87rem; margin: 0 0 8px 0; }
-.text p { margin: 0 0 14px 0; font-size: 1.04rem; }
+/* --- ITEM TITLE (The specific settings you wanted) --- */
+.text h3 { 
+  font-size: 1.87rem; 
+  margin: 0 0 8px 0; 
+  
+  /* Exact settings from your snippet */
+  font-family: "Google Sans Flex", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 800; /* Specific Bold Value */
+  font-style: normal;
+  
+  /* "ROND" 50 creates the rounded corners */
+  font-variation-settings:
+    "slnt" 0,
+    "wdth" 125,
+    "GRAD" 0,
+    "ROND" 50;
+    
+  letter-spacing: -0.01em;
+}
+
+.text p { 
+  margin: 0 0 14px 0; 
+  font-size: 1.04rem; 
+  font-weight: 400;
+  /* Reset variations for body text */
+  font-variation-settings:
+    "slnt" 0,
+    "wdth" 100,
+    "GRAD" 0,
+    "ROND" 0;
+}
 
 .buy-button {
   --button-height: 40px;
@@ -101,7 +150,16 @@ ul { list-style: none; padding: 0; margin: 0; }
   height: var(--button-height);
   padding: 0 16px;
   font-size: 1.25em;
-  font-weight: bold;
+  
+  /* Apply settings to button too */
+  font-family: "Google Sans Flex", sans-serif;
+  font-weight: 600;
+  font-variation-settings:
+    "slnt" 0,
+    "wdth" 110,
+    "GRAD" 0,
+    "ROND" 0;
+  
   text-decoration: none;
   color: white;
   border-radius: 9999px;
@@ -119,20 +177,17 @@ ul { list-style: none; padding: 0; margin: 0; }
   margin-right: 16px;
 }
 
-/* Scroll Animation States */
 .fade-in { opacity: 0; transition: opacity 1s ease; }
 .slide-in-left, .slide-in-right { opacity: 0; transition: transform 0.8s ease, opacity 0.8s ease; }
 .slide-in-left { transform: translateX(-40px); }
 .slide-in-right { transform: translateX(40px); }
 
-/* Visible States */
 .visible.slide-in-left, .visible.slide-in-right { transform: translateX(0); opacity: 1; }
 .visible.fade-in { opacity: 1; }
 
 /* --- MOBILE & TABLET LAYOUT (Max-Width 1024px) --- */
 @media (max-width: 1024px) {
   
-  /* Force Vertical Layout & Center Everything */
   .slide-container,
   .item.align-right .slide-container {
     display: flex !important;
@@ -142,7 +197,6 @@ ul { list-style: none; padding: 0; margin: 0; }
     gap: 20px !important;
   }
 
-  /* Reset Text Alignments */
   .item.align-right .text, 
   .item .text { 
     text-align: center !important; 
@@ -150,18 +204,41 @@ ul { list-style: none; padding: 0; margin: 0; }
     width: 100% !important;
   }
 
-  /* Force Button to Center */
   .item:not(.align-right) .buy-button,
   .item.align-right .buy-button {
     align-self: center !important;
     margin: 10px auto 0 auto !important;
   }
 
-  /* Adjust Image Size */
   .image-wrapper {
     width: 70% !important;
     height: auto !important;
     aspect-ratio: 1 / 1 !important;
     margin-bottom: 10px;
   }
+}
+
+.site-footer {
+  text-align: center;
+  padding: 50px 20px;
+  margin-top: 40px;
+  font-size: 0.9rem;
+  opacity: 0.7; /* Makes it slightly subtle compared to main content */
+  font-weight: 500;
+}
+
+.site-footer p {
+  margin: 8px 0;
+}
+
+.site-footer a {
+  color: inherit; /* Inherits white in dark mode, black in light mode */
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  transition: opacity 0.2s ease;
+}
+
+.site-footer a:hover {
+  opacity: 0.6;
 }
