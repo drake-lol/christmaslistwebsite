@@ -27,7 +27,6 @@ body::-webkit-scrollbar {
   top: 0;
   
   /* INSET BY 5px ON SIDES */
-  /* This creates the small gap from the screen edge */
   left: 5px;
   width: calc(100% - 10px);
   
@@ -83,7 +82,13 @@ body::-webkit-scrollbar {
   padding: 8px 16px;
   margin: 0; 
   font-size: 2rem;
-  white-space: nowrap; 
+  
+  /* ALLOW WRAPPING */
+  white-space: normal; 
+  line-height: 1.1;
+  max-width: 100%; 
+  text-align: left; /* Desktop Default */
+
   font-weight: 802;
   font-variation-settings: "slnt" 0, "wdth" 100, "GRAD" 0, "ROND" 50;
   
@@ -184,18 +189,19 @@ ul { list-style: none; padding: 0; margin: 0; }
   letter-spacing: -0.01em;
 }
 
+/* --- Sub-Title (Color/Variant) --- */
 .sub-title {
   font-size: 0.95rem;
   font-weight: 500;
-  line-height: 1.5;
   opacity: 0.85;
   
-  /* THE FIX: Pulls it up closer to the H3 (-4px), pushes Price down (8px) */
-  margin: 0px 0 0px 0; 
+  /* Pulls it up closer to H3 (-4px), pushes Price down (8px) */
+  margin: -4px 0 8px 0; 
   
   min-height: 0;
 }
 
+/* Hides element completely if text is empty */
 .sub-title:empty {
   display: none;
   margin: 0;
@@ -315,6 +321,9 @@ ul { list-style: none; padding: 0; margin: 0; }
   .sticky-nav h1 {
     padding-left: 11px;
     padding-right: 11px;
+    
+    /* Center title text on mobile */
+    text-align: center;
   }
   
   .frame { padding-top: 200px; }
