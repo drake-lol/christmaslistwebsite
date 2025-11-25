@@ -1,6 +1,3 @@
-/* ----------------------
-   Body and Frame
----------------------- */
 body {
   background: #ffffff;
   margin: 0;
@@ -11,12 +8,8 @@ body {
 .frame {
   margin: 10px;
   padding: 20px;
-  /* frame has no background or rounding */
 }
 
-/* ----------------------
-   Title
----------------------- */
 .frame h1 {
   display: inline-block;
   background-color: #ffcccc;
@@ -27,37 +20,25 @@ body {
   text-align: center;
 }
 
-/* ----------------------
-   List Reset
----------------------- */
-ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
+ul { list-style: none; padding: 0; margin: 0; }
 
-/* ----------------------
-   Items
----------------------- */
 .item {
-  display: flex;
-  align-items: center;
-  gap: 20px;
   margin-bottom: 30px;
   position: relative;
   padding: 20px;
   border-radius: 12px;
   transition: background 0.5s ease;
+  overflow: hidden;
 }
 
-/* Right-aligned items */
-.item.align-right {
-  flex-direction: row-reverse;
+.slide-container {
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
 
-/* ----------------------
-   Image Wrapper & Blob
----------------------- */
+.item.align-right .slide-container { flex-direction: row-reverse; }
+
 .image-wrapper {
   position: relative;
   display: flex;
@@ -65,54 +46,47 @@ ul {
   justify-content: center;
   width: 25vh;
   height: 25vh;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 12px;
 }
 
-/* Wavy blob shape */
 .shape {
   width: 100%;
   height: 100%;
   position: absolute;
-  top: 0;
-  left: 0;
-  transform: rotate(0deg);
+  top: 0; left: 0;
   z-index: 0;
   opacity: 0.4;
   animation: rotateShape 20s linear infinite;
 }
 
-/* Rotate animation */
 @keyframes rotateShape {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
 
-/* Main product image */
 .main-image {
   height: 100%;
   width: auto;
   max-width: 100%;
   border-radius: 10px;
-  position: relative;
   z-index: 1;
   object-fit: contain;
 }
 
-/* ----------------------
-   Text
----------------------- */
-.text h3 {
-  font-size: 1.87rem;
-  margin: 0 0 8px 0;
+.text {
+  display: flex;
+  flex-direction: column;
 }
 
-.text p {
-  margin: 0 0 14px 0;
-  font-size: 1.04rem;
-}
+.item:not(.align-right) .buy-button { align-self: flex-start; }
+.item.align-right .buy-button { align-self: flex-end; }
 
-/* ----------------------
-   Buy Button
----------------------- */
+.text h3 { font-size: 1.87rem; margin: 0 0 8px 0; }
+.text p { margin: 0 0 14px 0; font-size: 1.04rem; }
+.item.align-right .text { text-align: right; }
+
 .buy-button {
   --button-height: 40px;
   display: inline-flex;
@@ -128,10 +102,7 @@ ul {
   white-space: nowrap;
   transition: background 0.5s ease;
 }
-
-.buy-button:hover {
-  opacity: 0.85;
-}
+.buy-button:hover { opacity: 0.85; }
 
 .buy-icon {
   height: 55%;
@@ -140,52 +111,18 @@ ul {
   vertical-align: middle;
   object-fit: contain;
   margin-right: 16px;
-  padding-top: 4px;
 }
 
-/* ----------------------
-   Scroll Animations
----------------------- */
-.fade-in {
-  opacity: 0;
-  transition: opacity 1s ease;
-}
+.fade-in { opacity: 0; transition: opacity 1s ease; }
+.slide-in-left, .slide-in-right { opacity: 0; transition: transform 0.8s ease, opacity 0.8s ease; }
+.slide-in-left { transform: translateX(-40px); }
+.slide-in-right { transform: translateX(40px); }
+.visible.slide-in-left, .visible.slide-in-right { transform: translateX(0); opacity: 1; }
+.visible.fade-in { opacity: 1; }
 
-.slide-in {
-  opacity: 0;
-  transition: opacity 0.8s ease, transform 0.8s ease;
-}
-
-/* Slide-in directions for wrappers */
-.item:not(.align-right) .slide-in {
-  transform: translateX(-40px);
-}
-
-.item.align-right .slide-in {
-  transform: translateX(40px);
-}
-
-.visible.slide-in {
-  transform: translateX(0);
-  opacity: 1;
-}
-
-.visible.fade-in {
-  opacity: 1;
-}
-
-/* ----------------------
-   Responsive
----------------------- */
-@media (max-width: 600px) {
-  .item {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .image-wrapper, .main-image, .shape {
-    height: 25vh;
-    width: auto;
-    margin-bottom: 10px;
-  }
+@media (max-width:600px) {
+  .slide-container { flex-direction: column; align-items: center; }
+  .image-wrapper, .main-image, .shape { height:25vh; width:auto; margin-bottom:10px; }
+  .item.align-right .text { text-align: center; }
+  .item.align-right .buy-button { margin-left: 0; align-self: center; }
 }

@@ -1,157 +1,210 @@
-// ----------------------
-// Scroll animations
-// ----------------------
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      entry.target.classList.add('visible');
+// --- 1. Color Utilities ---
+
+function standardizeColor(str) {
+  const ctx = document.createElement('canvas').getContext('2d');
+  ctx.fillStyle = str;
+  return ctx.fillStyle;
+}
+
+function hexToRgb(hex) {
+  const bigint = parseInt(hex.slice(1), 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `rgb(${r},${g},${b})`;
+}
+
+function rgbToHsl(r,g,b){r/=255;g/=255;b/=255;const max=Math.max(r,g,b),min=Math.min(r,g,b);let h=0,s=0,l=(max+min)/2;if(max!==min){const d=max-min;s=l>0.5?d/(2-max-min):d/(max+min);switch(max){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break;}h/=6;}return [h,s,l];}
+function hslToRgb(h,s,l){let r,g,b;if(s===0)r=g=b=l;else{const hue2rgb=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p;};const q=l<0.5?l*(1+s):l+s-l*s;const p=2*l-q;r=hue2rgb(p,q,h+1/3);g=hue2rgb(p,q,h);b=hue2rgb(p,q,h-1/3);}return `rgb(${Math.round(r*255)},${Math.round(g*255)},${Math.round(b*255)})`;}
+
+function getCustomColor(colorInput, targetSaturation, targetLightness) {
+  let r, g, b;
+  if(colorInput.startsWith('rgb')){
+    [r,g,b] = colorInput.match(/\d+/g).map(Number);
+  } else {
+    const hex = standardizeColor(colorInput); 
+    const rgbStr = hexToRgb(hex);
+    [r,g,b] = rgbStr.match(/\d+/g).map(Number);
+  }
+  const [h,s,l] = rgbToHsl(r,g,b);
+  return hslToRgb(h, targetSaturation, targetLightness);
+}
+
+function getContrastTextColor(rgbString) {
+  const [r, g, b] = rgbString.match(/\d+/g).map(Number);
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  return brightness > 128 ? 'black' : 'white';
+}
+
+function generateWavyBlob(svg, baseColor, isDark){
+  const lightness = isDark ? 0.30 : 0.75; 
+  const blobColor = getCustomColor(baseColor, 1.0, lightness);
+
+  const points = 12, radius = 100;
+  const pathPoints = [];
+  for(let i=0;i<points;i++){
+    const angle=(i/points)*2*Math.PI;
+    const r = radius*(0.7+Math.random()*0.3);
+    const x = 100 + r*Math.cos(angle);
+    const y = 100 + r*Math.sin(angle);
+    pathPoints.push([x,y]);
+  }
+  let d="";
+  for(let i=0;i<points;i++){
+    const p0=pathPoints[(i-1+points)%points], p1=pathPoints[i], p2=pathPoints[(i+1)%points], p3=pathPoints[(i+2)%points];
+    const cp1x=p1[0]+(p2[0]-p0[0])/6, cp1y=p1[1]+(p2[1]-p0[1])/6;
+    const cp2x=p2[0]-(p3[0]-p1[0])/6, cp2y=p2[1]-(p3[1]-p1[1])/6;
+    if(i===0)d+=`M ${p1[0]} ${p1[1]} `;
+    d+=`C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2[0]} ${p2[1]} `;
+  }
+  d+="Z";
+  
+  svg.innerHTML = '';
+  const uniqueId = Math.random().toString(36).substr(2, 9);
+  const gradientId = `grad-${uniqueId}`;
+  
+  svg.innerHTML=`<defs>
+      <linearGradient id="${gradientId}" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="${blobColor}" stop-opacity="0.5"/>
+        <stop offset="100%" stop-color="${blobColor}" stop-opacity="0.5"/>
+      </linearGradient>
+    </defs>
+    <path d="${d}" fill="url(#${gradientId})"/>`;
+}
+
+// --- 2. Theme Handling Logic ---
+
+const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+let isFirstLoad = true; // Flag to track if this is the initial page load
+
+function applyTheme() {
+  const isDark = darkModeQuery.matches;
+
+  // --- Page Body Update ---
+  if (isDark) {
+      document.body.style.backgroundColor = '#121212';
+      document.body.style.color = '#ffffff';
+  } else {
+      document.body.style.backgroundColor = '#ffffff'; 
+      document.body.style.color = '#000000';
+  }
+
+  // --- NEW: Title Background Update ---
+  // Targeting a generic .title class (or h1)
+  const title = document.querySelector('.title, h1');
+  if(title) {
+      if(isDark) {
+          title.style.backgroundColor = '#333333'; // Darker box for title
+          title.style.color = '#ffffff';
+      } else {
+          title.style.backgroundColor = '#f0f0f0'; // Light grey box for title
+          title.style.color = '#000000';
+      }
+      
+      // Manage Transition for Title
+      if(isFirstLoad) {
+          title.style.transition = 'none';
+      } else {
+          title.style.transition = 'background-color 1s ease, color 1s ease';
+      }
+  }
+
+  // --- Manage Transition for Body ---
+  // If it's the first load, DISABLE transition so it applies instantly
+  if (isFirstLoad) {
+      document.body.style.transition = 'none';
+  } else {
+      document.body.style.transition = 'background-color 1s ease, color 1s ease';
+  }
+
+  // --- Process Items ---
+  document.querySelectorAll('.item').forEach((item, index)=>{
+    const color = item.dataset.color || '#555555';
+    
+    let finalBg;
+    if (isDark) {
+        finalBg = getCustomColor(color, 1.0, 0.15);
+    } else {
+        finalBg = getCustomColor(color, 1.0, 0.90);
+    }
+    
+    item.dataset.finalColor = finalBg;
+    
+    // Immediate update if visible
+    if (item.classList.contains('visible')) {
+        item.style.backgroundColor = finalBg;
+    } else {
+        item.style.backgroundColor = 'rgba(255,255,255,0)';
+    }
+
+    // --- Transition Handling for Items ---
+    if(isFirstLoad) {
+         item.style.transition = 'none'; // No animation on startup
+         
+         // We must manually add the fade-in transition later for the scroll effect
+         // We do this via the setTimeout at the bottom
+    } else {
+         // If switching modes while already on page, animate gracefully
+         item.style.transition = "background-color 1s ease, opacity 0.5s ease, transform 0.5s ease";
+    }
+
+    item.style.borderRadius = "30px";
+    item.style.color = getContrastTextColor(finalBg);
+    
+    const wrapper = item.querySelector('.image-wrapper');
+    const svg = wrapper.querySelector('.shape');
+    generateWavyBlob(svg, color, isDark); 
+    
+    const button = item.querySelector('.buy-button');
+    const btnTop = getCustomColor(color, 0.9, 0.65);    
+    const btnBottom = getCustomColor(color, 1.0, 0.45); 
+    button.style.background = `linear-gradient(to bottom, ${btnTop}, ${btnBottom})`;
+  });
+
+  // --- Reset Flag ---
+  // After the first run, we enable animations for future changes
+  if (isFirstLoad) {
+      // Small timeout ensures the "none" property takes effect for the initial paint
+      setTimeout(() => {
+          document.body.style.transition = 'background-color 1s ease, color 1s ease';
+          
+          if(title) title.style.transition = 'background-color 1s ease, color 1s ease';
+          
+          // Re-enable item transitions for the scroll reveal
+          document.querySelectorAll('.item').forEach(el => {
+              el.style.transition = "background-color 1s ease, opacity 0.5s ease, transform 0.5s ease";
+          });
+          
+      }, 100);
+      isFirstLoad = false;
+  }
+}
+
+// Listen for system theme changes
+darkModeQuery.addEventListener('change', applyTheme);
+
+// Run once on load
+applyTheme();
+
+// --- 3. Animation Observer ---
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach((entry, i) => {
+    if(entry.isIntersecting) {
+      const item = entry.target;
+      observer.unobserve(item);
+
+      setTimeout(() => {
+        item.classList.add('visible');
+        item.querySelectorAll('.slide-in-left, .slide-in-right, .fade-in').forEach(child => {
+            child.classList.add('visible');
+        });
+        if(item.dataset.finalColor) {
+           item.style.backgroundColor = item.dataset.finalColor;
+        }
+      }, i * 150); 
     }
   });
 }, { threshold: 0.2 });
 
-document.querySelectorAll('.slide-in, .fade-in').forEach(el => observer.observe(el));
-
-
-// ----------------------
-// Color utilities
-// ----------------------
-function getAccentColor(img, callback) {
-  const canvas = document.createElement('canvas');
-  canvas.width = img.width;
-  canvas.height = img.height;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(img, 0, 0);
-  const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-
-  let r=0, g=0, b=0, count=0;
-  for(let i=0;i<data.length;i+=4){
-    const red=data[i], green=data[i+1], blue=data[i+2];
-    const brightness = (red*299 + green*587 + blue*114)/1000;
-    if(brightness > 40 && brightness < 220){
-      r+=red; g+=green; b+=blue; count++;
-    }
-  }
-
-  if(count===0) count=1;
-  r=Math.floor(r/count);
-  g=Math.floor(g/count);
-  b=Math.floor(b/count);
-
-  callback(`rgb(${r},${g},${b})`);
-}
-
-function rgbToHsl(r,g,b){
-  r/=255; g/=255; b/=255;
-  const max=Math.max(r,g,b), min=Math.min(r,g,b);
-  let h=0,s=0,l=(max+min)/2;
-  if(max!==min){
-    const d=max-min;
-    s=l>0.5?d/(2-max-min):d/(max+min);
-    switch(max){
-      case r: h=(g-b)/d + (g<b?6:0); break;
-      case g: h=(b-r)/d + 2; break;
-      case b: h=(r-g)/d + 4; break;
-    }
-    h/=6;
-  }
-  return [h,s,l];
-}
-
-function hslToRgb(h,s,l){
-  let r,g,b;
-  if(s===0) r=g=b=l;
-  else {
-    const hue2rgb=(p,q,t)=>{
-      if(t<0) t+=1; if(t>1) t-=1;
-      if(t<1/6) return p+(q-p)*6*t;
-      if(t<1/2) return q;
-      if(t<2/3) return p+(q-p)*(2/3-t)*6;
-      return p;
-    }
-    const q=l<0.5?l*(1+s):l+s-l*s;
-    const p=2*l-q;
-    r=hue2rgb(p,q,h+1/3);
-    g=hue2rgb(p,q,h);
-    b=hue2rgb(p,q,h-1/3);
-  }
-  return `rgb(${Math.round(r*255)},${Math.round(g*255)},${Math.round(b*255)})`;
-}
-
-function getComplementaryColor(rgb){
-  const [r,g,b] = rgb.match(/\d+/g).map(Number);
-  let [h,s,l] = rgbToHsl(r,g,b);
-  h = (h + 0.5) % 1;
-  return hslToRgb(h,s,l);
-}
-
-function lightenColor(rgb, amount=0.875){
-  const [r,g,b] = rgb.match(/\d+/g).map(Number);
-  const [h,s,l] = rgbToHsl(r,g,b);
-  const newL = Math.min(l + amount*(1-l),1);
-  return hslToRgb(h,s,newL);
-}
-
-// ----------------------
-// Wavy blob generator
-// ----------------------
-function generateWavyBlob(svg, baseColor) {
-  const points = 12;
-  const radius = 100;
-  const pathPoints = [];
-
-  for(let i=0;i<points;i++){
-    const angle = (i/points)*2*Math.PI;
-    const r = radius * (0.7 + Math.random()*0.3);
-    const x = 100 + r * Math.cos(angle);
-    const y = 100 + r * Math.sin(angle);
-    pathPoints.push([x,y]);
-  }
-
-  let d = "";
-  for(let i=0;i<points;i++){
-    const p0 = pathPoints[(i-1+points)%points];
-    const p1 = pathPoints[i];
-    const p2 = pathPoints[(i+1)%points];
-    const p3 = pathPoints[(i+2)%points];
-
-    const cp1x = p1[0] + (p2[0]-p0[0])/6;
-    const cp1y = p1[1] + (p2[1]-p0[1])/6;
-    const cp2x = p2[0] - (p3[0]-p1[0])/6;
-    const cp2y = p2[1] - (p3[1]-p1[1])/6;
-
-    if(i===0) d += `M ${p1[0]} ${p1[1]} `;
-    d += `C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2[0]} ${p2[1]} `;
-  }
-  d += "Z";
-
-  svg.innerHTML = `
-    <defs>
-      <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="${baseColor}" stop-opacity="0.6"/>
-        <stop offset="100%" stop-color="${baseColor}" stop-opacity="0.3"/>
-      </linearGradient>
-    </defs>
-    <path d="${d}" fill="url(#grad)"/>
-  `;
-}
-
-// ----------------------
-// Apply colors & generate blobs
-// ----------------------
-document.querySelectorAll('.main-image').forEach(img => {
-  img.onload = () => {
-    getAccentColor(img, accent=>{
-      const complementary = getComplementaryColor(accent);
-      const lighterBg = lightenColor(complementary, 0.875);
-
-      const wrapper = img.closest('.image-wrapper');
-      const svg = wrapper.querySelector('.shape');
-      generateWavyBlob(svg, complementary);
-
-      const button = img.closest('.item').querySelector('.buy-button');
-      button.style.background = `linear-gradient(to bottom, ${complementary}, rgba(0,0,0,0.6))`;
-
-      img.closest('.item').style.backgroundColor = lighterBg;
-    });
-  };
-});
+document.querySelectorAll('.item').forEach(el => observer.observe(el));
