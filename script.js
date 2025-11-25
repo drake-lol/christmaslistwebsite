@@ -1,4 +1,5 @@
-// --- 0. Extension Protection ---
+// --- 0. Extension Protection & Meta Tags ---
+// Injects tags to prevent extensions like Dark Reader from overriding your specific theme colors
 const metaLock = document.createElement('meta');
 metaLock.name = "darkreader-lock";
 document.head.appendChild(metaLock);
@@ -28,8 +29,10 @@ function hexToRgb(hex) {
 }
 
 function rgbToHsl(r,g,b){r/=255;g/=255;b/=255;const max=Math.max(r,g,b),min=Math.min(r,g,b);let h=0,s=0,l=(max+min)/2;if(max!==min){const d=max-min;s=l>0.5?d/(2-max-min):d/(max+min);switch(max){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break;}h/=6;}return [h,s,l];}
+
 function hslToRgb(h,s,l){let r,g,b;if(s===0)r=g=b=l;else{const hue2rgb=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p;};const q=l<0.5?l*(1+s):l+s-l*s;const p=2*l-q;r=hue2rgb(p,q,h+1/3);g=hue2rgb(p,q,h);b=hue2rgb(p,q,h-1/3);}return `rgb(${Math.round(r*255)},${Math.round(g*255)},${Math.round(b*255)})`;}
 
+// Helper to generate vibrant/pastel colors based on theme
 function getCustomColor(colorInput, targetSaturation, targetLightness) {
   let r, g, b;
   if(colorInput.startsWith('rgb')){
@@ -49,6 +52,7 @@ function getContrastTextColor(rgbString) {
   return brightness > 128 ? 'black' : 'white';
 }
 
+// Generates the SVG Blob shapes
 function generateWavyBlob(svg, baseColor, isDark){
   const lightness = isDark ? 0.30 : 0.75; 
   const blobColor = getCustomColor(baseColor, 1.0, lightness);
@@ -85,6 +89,7 @@ function generateWavyBlob(svg, baseColor, isDark){
     <path d="${d}" fill="url(#${gradientId})"/>`;
 }
 
+
 // --- 2. Theme Handling Logic ---
 
 const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -93,44 +98,37 @@ let isFirstLoad = true;
 function applyTheme() {
   const isDark = darkModeQuery.matches;
 
-  // --- Page Body Update ---
-  if (isDark) {
-      document.body.style.backgroundColor = '#121212';
-      document.body.style.color = '#ffffff';
-  } else {
-      document.body.style.backgroundColor = '#ffffff'; 
-      document.body.style.color = '#000000';
+  // A. Page Body Update
+  const bodyBg = isDark ? '#121212' : '#ffffff';
+  const bodyColor = isDark ? '#ffffff' : '#000000';
+  document.body.style.backgroundColor = bodyBg;
+  document.body.style.color = bodyColor;
+
+  // B. Sticky Nav Background
+  const stickyNav = document.querySelector('.sticky-nav');
+  if(stickyNav) {
+      stickyNav.style.backgroundColor = bodyBg;
+      stickyNav.style.transition = isFirstLoad ? 'none' : 'background-color 1s ease';
   }
 
-  // --- STRICT CHRISTMAS RED TITLE LOGIC ---
-  // I updated this to ensure it never falls back to gray
-  const title = document.querySelector('.title, h1');
+  // C. Christmas Red Title Logic
+  // Targeting the H1 inside the sticky nav
+  const title = document.querySelector('.sticky-nav h1');
   if(title) {
       if(isDark) {
-          // Dark Mode: Dark Christmas Red
+          // Dark Mode: Deep Crimson Red
           title.style.backgroundColor = '#590a0a'; 
           title.style.color = '#ffffff'; 
       } else {
-          // Light Mode: Bright Candy Red
+          // Light Mode: Pale Candy Red
           title.style.backgroundColor = '#ffcccc'; 
           title.style.color = '#000000'; 
       }
       
-      if(isFirstLoad) {
-          title.style.transition = 'none';
-      } else {
-          title.style.transition = 'background-color 1s ease, color 1s ease';
-      }
+      title.style.transition = isFirstLoad ? 'none' : 'background-color 1s ease, color 1s ease';
   }
 
-  // --- Body Transition ---
-  if (isFirstLoad) {
-      document.body.style.transition = 'none';
-  } else {
-      document.body.style.transition = 'background-color 1s ease, color 1s ease';
-  }
-
-  // --- Process Items ---
+  // D. Process Items
   document.querySelectorAll('.item').forEach((item, index)=>{
     const color = item.dataset.color || '#555555';
     
@@ -149,15 +147,10 @@ function applyTheme() {
         item.style.backgroundColor = 'rgba(255,255,255,0)';
     }
 
-    if(isFirstLoad) {
-         item.style.transition = 'none'; 
-    } else {
-         item.style.transition = "background-color 1s ease, opacity 0.5s ease, transform 0.5s ease";
-    }
+    // No transition on first load, otherwise smooth transition
+    item.style.transition = isFirstLoad ? 'none' : "background-color 1s ease, opacity 0.5s ease, transform 0.5s ease";
 
-    item.style.borderRadius = "30px";
     item.style.color = getContrastTextColor(finalBg);
-    
     const wrapper = item.querySelector('.image-wrapper');
     const svg = wrapper.querySelector('.shape');
     generateWavyBlob(svg, color, isDark); 
@@ -168,10 +161,12 @@ function applyTheme() {
     button.style.background = `linear-gradient(to bottom, ${btnTop}, ${btnBottom})`;
   });
 
-  // --- Reset Flag ---
+  // E. Reset First Load Flag
   if (isFirstLoad) {
+      // Re-enable transitions after a split second
       setTimeout(() => {
           document.body.style.transition = 'background-color 1s ease, color 1s ease';
+          if(stickyNav) stickyNav.style.transition = 'background-color 1s ease';
           if(title) title.style.transition = 'background-color 1s ease, color 1s ease';
           document.querySelectorAll('.item').forEach(el => {
               el.style.transition = "background-color 1s ease, opacity 0.5s ease, transform 0.5s ease";
@@ -184,7 +179,8 @@ function applyTheme() {
 darkModeQuery.addEventListener('change', applyTheme);
 applyTheme();
 
-// --- 3. Animation Observer ---
+
+// --- 3. Scroll Observer (Item Fade In) ---
 
 const observer = new IntersectionObserver(entries => {
   entries.forEach((entry, i) => {
@@ -206,3 +202,45 @@ const observer = new IntersectionObserver(entries => {
 }, { threshold: 0.2 });
 
 document.querySelectorAll('.item').forEach(el => observer.observe(el));
+
+
+// --- 4. Smooth Header Animation Logic ---
+
+const nav = document.querySelector('.sticky-nav');
+const navTitle = nav.querySelector('h1');
+
+function calculateHeroOffset() {
+  // Only run calculation on Desktop (>1024px)
+  if (window.innerWidth > 1024) {
+      const navWidth = nav.offsetWidth;
+      const titleWidth = navTitle.offsetWidth;
+      
+      // Math: Center of Container - Center of Title - Left Padding (40px)
+      const offset = (navWidth / 2) - (titleWidth / 2) - 40; 
+      
+      navTitle.style.setProperty('--hero-offset', `${offset}px`);
+  } else {
+      navTitle.style.setProperty('--hero-offset', '0px');
+  }
+}
+
+function handleScroll() {
+  const scrollY = window.scrollY;
+  
+  if (scrollY > 50) {
+    nav.classList.add('scrolled');
+  } else {
+    nav.classList.remove('scrolled');
+  }
+}
+
+// Listen for scroll and resize
+window.addEventListener('scroll', handleScroll);
+window.addEventListener('resize', calculateHeroOffset); 
+
+// FIX: Run calculation only after fonts and layout are fully loaded
+window.addEventListener('load', calculateHeroOffset);
+
+// Run once on initial parse just in case
+calculateHeroOffset();
+handleScroll();
