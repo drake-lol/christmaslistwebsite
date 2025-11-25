@@ -98,10 +98,15 @@ function applyTheme() {
   // A. Page Body
   const bodyBg = isDark ? '#121212' : '#ffffff';
   const bodyColor = isDark ? '#ffffff' : '#000000';
+  
+  // Update the CSS variable so the Inverted Corners match the header color
+  document.documentElement.style.setProperty('--nav-bg', bodyBg);
+  
   document.body.style.backgroundColor = bodyBg;
   document.body.style.color = bodyColor;
+  document.body.style.transition = isFirstLoad ? 'none' : 'background-color 1s ease, color 1s ease';
 
-  // B. Sticky Nav Background
+  // B. Sticky Nav
   const stickyNav = document.querySelector('.sticky-nav');
   if(stickyNav) {
       stickyNav.style.backgroundColor = bodyBg;
@@ -134,9 +139,10 @@ function applyTheme() {
         item.style.backgroundColor = 'rgba(255,255,255,0)';
     }
 
-    item.style.transition = isFirstLoad ? 'none' : "background-color 1s ease, opacity 0.5s ease, transform 0.5s ease";
     item.style.color = getContrastTextColor(finalBg);
-    
+    const scrollTrans = "opacity 0.5s ease, transform 0.5s ease";
+    item.style.transition = isFirstLoad ? scrollTrans : `background-color 1s ease, ${scrollTrans}`;
+
     const wrapper = item.querySelector('.image-wrapper');
     const svg = wrapper.querySelector('.shape');
     generateWavyBlob(svg, color, isDark); 
@@ -184,14 +190,12 @@ const observer = new IntersectionObserver(entries => {
 document.querySelectorAll('.item').forEach(el => observer.observe(el));
 
 
-// --- 4. Fluid Scroll Animation (Shrunk Desktop Height) ---
+// --- 4. Fluid Scroll Animation ---
 
 const nav = document.querySelector('.sticky-nav');
 
 // CONFIGURATION
 const MAX_HEIGHT_DESKTOP = 220; 
-
-// CHANGED: Reduced from 110 to 82 (75%)
 const MIN_HEIGHT_DESKTOP = 82; 
 
 const MAX_HEIGHT_MOBILE = 160; 
@@ -209,20 +213,13 @@ function updateNavHeight() {
   
   const scrollRange = isDesktop ? SCROLL_RANGE_DESKTOP : SCROLL_RANGE_MOBILE;
   
-  // Calculate percentage of scroll (0.0 to 1.0)
   let progress = Math.min(scrollY / scrollRange, 1);
   progress = Math.max(progress, 0);
   
-  // Interpolate Height
   const currentHeight = startHeight - (progress * (startHeight - endHeight));
-  
-  // Apply Height
   nav.style.height = `${currentHeight}px`;
 }
 
-// Attach to scroll and resize
 window.addEventListener('scroll', updateNavHeight);
 window.addEventListener('resize', updateNavHeight);
-
-// Run immediately
 updateNavHeight();

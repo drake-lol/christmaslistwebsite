@@ -8,32 +8,71 @@ body {
   margin: 0;
   padding: 0;
   font-family: "Google Sans Flex", arial, sans-serif;
-  transition: background-color 1s ease, color 1s ease;
+  
+  /* HIDE SCROLLBAR */
+  -ms-overflow-style: none;  
+  scrollbar-width: none;  
+}
+
+body::-webkit-scrollbar {
+  display: none;
 }
 
 /* --- 1. Sticky Navigation Bar --- */
 .sticky-nav {
   position: fixed;
   z-index: 1000;
-  height: 200px; /* Initial height (overridden by JS) */
+  height: 200px; 
   top: 0;
-  left: 0;
-  width: 100%;
+  
+  /* INSET BY 5px ON SIDES */
+  left: 5px;
+  width: calc(100% - 10px);
+  
+  /* FLAT BOTTOM (The corners add the shape) */
+  border-radius: 0;
   
   display: flex;
   align-items: center; 
   justify-content: flex-start; 
   
-  padding-left: 40px; 
-  padding-right: 40px;
+  /* INTERNAL PADDING (Aligns text with items) */
+  /* Items have 20px padding. The bar is shifted 5px. */
+  /* 20px - 5px = 15px visual adjustment if needed, but keeping 20px allows for "breathing room" */
+  padding-left: 20px; 
+  padding-right: 20px;
   box-sizing: border-box; 
   
-  /* REMOVED: Shadow is now forced to none */
   box-shadow: none !important;
-
-  /* REMOVED: box-shadow from transition list */
-  transition: background-color 1s ease; 
 }
+
+/* --- THE INVERTED CORNERS (The Cutout Mask) --- */
+.sticky-nav::before,
+.sticky-nav::after {
+  content: '';
+  position: absolute;
+  bottom: -30px; /* Extends 30px below header */
+  width: 30px;   /* MATCHES RADIUS: Ensures the curve is 1:1 */
+  height: 30px;  /* MATCHES RADIUS: 30px height */
+  z-index: 1000;
+  padding-left: 15px;
+  pointer-events: none;
+}
+
+/* LEFT CORNER SCOOP */
+.sticky-nav::before {
+  left: 0; /* Aligns with the inset header */
+  /* Solid Color on Top/Left, Transparent Circle at Bottom/Right */
+  background: radial-gradient(circle 30px at 100% 100%, transparent 30px, var(--nav-bg) 31px);
+}
+
+/* RIGHT CORNER SCOOP */
+.sticky-nav::after {
+  right: 0; /* Aligns with the inset header */
+  /* Solid Color on Top/Right, Transparent Circle at Bottom/Left */
+  background: radial-gradient(circle 30px at 0% 100%, transparent 30px, var(--nav-bg) 31px);
+}
+
 
 /* --- TITLE STYLING --- */
 .sticky-nav h1 {
@@ -46,19 +85,18 @@ body {
   font-weight: 802;
   font-variation-settings: "slnt" 0, "wdth" 100, "GRAD" 0, "ROND" 50;
   
-  /* DESKTOP ONLY: Nudge left by 5px */
-  transform: translateX(-5px);
+  /* Reset the nudge since we have layout padding now */
+  transform: none;
   
-  /* FORCE REMOVE SHADOWS */
   box-shadow: none !important;
   text-shadow: none !important;
-  
-  transition: background-color 1s ease, color 1s ease;
 }
 
 /* --- 2. Main Layout --- */
 .frame {
-  margin: 10px;
+  margin: 0;
+  
+  /* MATCH PADDING: 5px gap + 20px item padding logic */
   padding: 20px;
   padding-top: 240px; 
 }
@@ -69,8 +107,11 @@ ul { list-style: none; padding: 0; margin: 0; }
   margin-bottom: 30px;
   position: relative;
   padding: 20px;
+  
+  /* BORDER RADIUS: 30px (Matches the Header Scoop) */
   border-radius: 30px; 
-  transition: background-color 1s ease, opacity 0.5s ease, transform 0.5s ease;
+  
+  transition: opacity 0.5s ease, transform 0.5s ease;
   overflow: hidden;
 }
 
@@ -201,17 +242,21 @@ ul { list-style: none; padding: 0; margin: 0; }
 }
 .site-footer a:hover { opacity: 0.6; }
 
-/* --- 8. MOBILE & TABLET LAYOUT (Max-Width 1024px) --- */
+/* --- 8. MOBILE & TABLET LAYOUT --- */
 @media (max-width: 1024px) {
   .sticky-nav {
     justify-content: center !important; 
     text-align: center !important;
+    
+    /* KEEP 5px PADDING ON MOBILE TOO */
+    left: 5px !important;
+    width: calc(100% - 10px) !important;
+    
     padding-left: 20px !important;
     padding-right: 20px !important;
   }
 
   .sticky-nav h1 {
-    transform: none; 
     padding-left: 11px;
     padding-right: 11px;
   }
