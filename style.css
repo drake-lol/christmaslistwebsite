@@ -80,12 +80,13 @@ ul { list-style: none; padding: 0; margin: 0; }
   flex-direction: column;
 }
 
+/* Default Desktop Alignments */
 .item:not(.align-right) .buy-button { align-self: flex-start; }
 .item.align-right .buy-button { align-self: flex-end; }
+.item.align-right .text { text-align: right; }
 
 .text h3 { font-size: 1.87rem; margin: 0 0 8px 0; }
 .text p { margin: 0 0 14px 0; font-size: 1.04rem; }
-.item.align-right .text { text-align: right; }
 
 .buy-button {
   --button-height: 40px;
@@ -120,9 +121,37 @@ ul { list-style: none; padding: 0; margin: 0; }
 .visible.slide-in-left, .visible.slide-in-right { transform: translateX(0); opacity: 1; }
 .visible.fade-in { opacity: 1; }
 
-@media (max-width:600px) {
-  .slide-container { flex-direction: column; align-items: center; }
-  .image-wrapper, .main-image, .shape { height:25vh; width:auto; margin-bottom:10px; }
-  .item.align-right .text { text-align: center; }
-  .item.align-right .buy-button { margin-left: 0; align-self: center; }
+/* --- MOBILE MODE --- */
+@media (max-width: 768px) {
+  /* Stack everything vertically */
+  .slide-container,
+  .item.align-right .slide-container {
+    flex-direction: column; 
+    text-align: center;
+  }
+
+  /* Reset alignment for right-aligned items */
+  .item.align-right .text { 
+    text-align: center; 
+  }
+
+  /* Center the content inside the text block */
+  .text {
+    align-items: center;
+    width: 100%;
+  }
+
+  /* Force buttons to the center for both layouts */
+  .item:not(.align-right) .buy-button,
+  .item.align-right .buy-button {
+    align-self: center;
+  }
+
+  /* Adjust image spacing and size for mobile */
+  .image-wrapper {
+    width: 60%; /* Make image larger on mobile relative to container */
+    height: auto;
+    aspect-ratio: 1 / 1;
+    margin-bottom: 20px;
+  }
 }

@@ -1,3 +1,19 @@
+// --- 0. Extension Protection (Run Immediately) ---
+// This injects a special meta tag that tells Dark Reader to disable itself for this site
+const metaLock = document.createElement('meta');
+metaLock.name = "darkreader-lock";
+document.head.appendChild(metaLock);
+
+// This tells the browser your site supports both modes natively
+const metaScheme = document.createElement('meta');
+metaScheme.name = "color-scheme";
+metaScheme.content = "light dark";
+document.head.appendChild(metaScheme);
+
+// Force the CSS property as well
+document.documentElement.style.colorScheme = 'light dark';
+
+
 // --- 1. Color Utilities ---
 
 function standardizeColor(str) {
@@ -75,7 +91,7 @@ function generateWavyBlob(svg, baseColor, isDark){
 // --- 2. Theme Handling Logic ---
 
 const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
-let isFirstLoad = true; // Flag to track if this is the initial page load
+let isFirstLoad = true; 
 
 function applyTheme() {
   const isDark = darkModeQuery.matches;
@@ -89,19 +105,17 @@ function applyTheme() {
       document.body.style.color = '#000000';
   }
 
-  // --- NEW: Title Background Update ---
-  // Targeting a generic .title class (or h1)
+  // --- Title Logic ---
   const title = document.querySelector('.title, h1');
   if(title) {
       if(isDark) {
-          title.style.backgroundColor = '#333333'; // Darker box for title
-          title.style.color = '#ffffff';
+          title.style.backgroundColor = '#3b0e0e'; // Deep Crimson
+          title.style.color = '#ffffff'; 
       } else {
-          title.style.backgroundColor = '#f0f0f0'; // Light grey box for title
-          title.style.color = '#000000';
+          title.style.backgroundColor = '#ffdadb'; // Pale Candy Red
+          title.style.color = '#000000'; 
       }
       
-      // Manage Transition for Title
       if(isFirstLoad) {
           title.style.transition = 'none';
       } else {
@@ -109,8 +123,7 @@ function applyTheme() {
       }
   }
 
-  // --- Manage Transition for Body ---
-  // If it's the first load, DISABLE transition so it applies instantly
+  // --- Body Transition ---
   if (isFirstLoad) {
       document.body.style.transition = 'none';
   } else {
@@ -130,21 +143,15 @@ function applyTheme() {
     
     item.dataset.finalColor = finalBg;
     
-    // Immediate update if visible
     if (item.classList.contains('visible')) {
         item.style.backgroundColor = finalBg;
     } else {
         item.style.backgroundColor = 'rgba(255,255,255,0)';
     }
 
-    // --- Transition Handling for Items ---
     if(isFirstLoad) {
-         item.style.transition = 'none'; // No animation on startup
-         
-         // We must manually add the fade-in transition later for the scroll effect
-         // We do this via the setTimeout at the bottom
+         item.style.transition = 'none'; 
     } else {
-         // If switching modes while already on page, animate gracefully
          item.style.transition = "background-color 1s ease, opacity 0.5s ease, transform 0.5s ease";
     }
 
@@ -162,28 +169,19 @@ function applyTheme() {
   });
 
   // --- Reset Flag ---
-  // After the first run, we enable animations for future changes
   if (isFirstLoad) {
-      // Small timeout ensures the "none" property takes effect for the initial paint
       setTimeout(() => {
           document.body.style.transition = 'background-color 1s ease, color 1s ease';
-          
           if(title) title.style.transition = 'background-color 1s ease, color 1s ease';
-          
-          // Re-enable item transitions for the scroll reveal
           document.querySelectorAll('.item').forEach(el => {
               el.style.transition = "background-color 1s ease, opacity 0.5s ease, transform 0.5s ease";
           });
-          
       }, 100);
       isFirstLoad = false;
   }
 }
 
-// Listen for system theme changes
 darkModeQuery.addEventListener('change', applyTheme);
-
-// Run once on load
 applyTheme();
 
 // --- 3. Animation Observer ---
