@@ -9,11 +9,12 @@ body {
   padding: 0;
   font-family: "Google Sans Flex", arial, sans-serif;
   
-  /* HIDE SCROLLBAR */
+  /* HIDE SCROLLBAR (Firefox/IE/Edge) */
   -ms-overflow-style: none;  
   scrollbar-width: none;  
 }
 
+/* HIDE SCROLLBAR (Chrome/Safari/Opera) */
 body::-webkit-scrollbar {
   display: none;
 }
@@ -22,10 +23,11 @@ body::-webkit-scrollbar {
 .sticky-nav {
   position: fixed;
   z-index: 1000;
-  height: 200px; 
+  height: 200px; /* Initial height, JS updates this */
   top: 0;
   
   /* INSET BY 5px ON SIDES */
+  /* This creates the small gap from the screen edge */
   left: 5px;
   width: calc(100% - 10px);
   
@@ -36,9 +38,8 @@ body::-webkit-scrollbar {
   align-items: center; 
   justify-content: flex-start; 
   
-  /* INTERNAL PADDING (Aligns text with items) */
-  /* Items have 20px padding. The bar is shifted 5px. */
-  /* 20px - 5px = 15px visual adjustment if needed, but keeping 20px allows for "breathing room" */
+  /* INTERNAL PADDING */
+  /* Matches the 20px visual gutter of the items */
   padding-left: 20px; 
   padding-right: 20px;
   box-sizing: border-box; 
@@ -47,6 +48,8 @@ body::-webkit-scrollbar {
 }
 
 /* --- THE INVERTED CORNERS (The Cutout Mask) --- */
+/* These are solid blocks that sit BELOW the header */
+/* They create the "scoop" effect on top of scrolling items */
 .sticky-nav::before,
 .sticky-nav::after {
   content: '';
@@ -55,24 +58,23 @@ body::-webkit-scrollbar {
   width: 30px;   /* MATCHES RADIUS: Ensures the curve is 1:1 */
   height: 30px;  /* MATCHES RADIUS: 30px height */
   z-index: 1000;
-  padding-left: 15px;
   pointer-events: none;
+  padding-left: 15px;
 }
 
 /* LEFT CORNER SCOOP */
 .sticky-nav::before {
-  left: 0; /* Aligns with the inset header */
+  left: 0; 
   /* Solid Color on Top/Left, Transparent Circle at Bottom/Right */
   background: radial-gradient(circle 30px at 100% 100%, transparent 30px, var(--nav-bg) 31px);
 }
 
 /* RIGHT CORNER SCOOP */
 .sticky-nav::after {
-  right: 0; /* Aligns with the inset header */
+  right: 0; 
   /* Solid Color on Top/Right, Transparent Circle at Bottom/Left */
   background: radial-gradient(circle 30px at 0% 100%, transparent 30px, var(--nav-bg) 31px);
 }
-
 
 /* --- TITLE STYLING --- */
 .sticky-nav h1 {
@@ -85,7 +87,6 @@ body::-webkit-scrollbar {
   font-weight: 802;
   font-variation-settings: "slnt" 0, "wdth" 100, "GRAD" 0, "ROND" 50;
   
-  /* Reset the nudge since we have layout padding now */
   transform: none;
   
   box-shadow: none !important;
@@ -95,8 +96,6 @@ body::-webkit-scrollbar {
 /* --- 2. Main Layout --- */
 .frame {
   margin: 0;
-  
-  /* MATCH PADDING: 5px gap + 20px item padding logic */
   padding: 20px;
   padding-top: 240px; 
 }
@@ -111,6 +110,7 @@ ul { list-style: none; padding: 0; margin: 0; }
   /* BORDER RADIUS: 30px (Matches the Header Scoop) */
   border-radius: 30px; 
   
+  /* Only opacity/transform transition here. Color is handled by JS. */
   transition: opacity 0.5s ease, transform 0.5s ease;
   overflow: hidden;
 }
@@ -168,7 +168,12 @@ ul { list-style: none; padding: 0; margin: 0; }
 
 .item:not(.align-right) .buy-button { align-self: flex-start; }
 .item.align-right .buy-button { align-self: flex-end; }
-.item.align-right .text { text-align: right; }
+
+/* FIX: Forces description/pricing to the right on Right-Aligned items */
+.item.align-right .text { 
+  text-align: right; 
+  align-items: flex-end; 
+}
 
 .text h3 { 
   font-size: 1.87rem; 
@@ -179,6 +184,57 @@ ul { list-style: none; padding: 0; margin: 0; }
   letter-spacing: -0.01em;
 }
 
+.sub-title {
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.5;
+  opacity: 0.85;
+  
+  /* THE FIX: Pulls it up closer to the H3 (-4px), pushes Price down (8px) */
+  margin: 0px 0 0px 0; 
+  
+  min-height: 0;
+}
+
+.sub-title:empty {
+  display: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* --- PRICE STYLING --- */
+.price-wrapper {
+  display: flex;
+  align-items: baseline; 
+  gap: 12px;             
+  margin-bottom: 8px;
+  
+  /* Default: Left Aligned */
+  justify-content: flex-start;
+  width: 100%;
+}
+
+/* FIX: Right align pricing for Right-Aligned items */
+.item.align-right .price-wrapper {
+  justify-content: flex-end;
+}
+
+/* The Big Sale Price */
+.price.current {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+/* The Old Original Price */
+.price.original {
+  font-size: 1.1rem;
+  font-weight: 500;
+  text-decoration: line-through; 
+  opacity: 0.5;                  
+}
+
+/* Description text */
 .text p { 
   margin: 0 0 14px 0; 
   font-size: 1.04rem; 
@@ -263,6 +319,7 @@ ul { list-style: none; padding: 0; margin: 0; }
   
   .frame { padding-top: 200px; }
   
+  /* Stack Items Vertically */
   .slide-container,
   .item.align-right .slide-container {
     display: flex !important;
@@ -271,15 +328,25 @@ ul { list-style: none; padding: 0; margin: 0; }
     text-align: center !important;
     gap: 20px !important;
   }
+  
+  /* Reset Alignment to Center for Mobile */
   .item.align-right .text, .item .text { 
     text-align: center !important; 
     align-items: center !important;
     width: 100% !important;
   }
+  
+  /* Center Price Wrapper on Mobile */
+  .price-wrapper,
+  .item.align-right .price-wrapper {
+    justify-content: center; 
+  }
+
   .item:not(.align-right) .buy-button, .item.align-right .buy-button {
     align-self: center !important;
     margin: 10px auto 0 auto !important;
   }
+  
   .image-wrapper {
     width: 70% !important;
     height: auto !important;
