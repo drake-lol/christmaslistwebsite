@@ -1,5 +1,4 @@
 // --- 0. Extension Protection & Meta Tags ---
-// Injects tags to prevent extensions like Dark Reader from overriding your specific theme colors
 const metaLock = document.createElement('meta');
 metaLock.name = "darkreader-lock";
 document.head.appendChild(metaLock);
@@ -32,7 +31,6 @@ function rgbToHsl(r,g,b){r/=255;g/=255;b/=255;const max=Math.max(r,g,b),min=Math
 
 function hslToRgb(h,s,l){let r,g,b;if(s===0)r=g=b=l;else{const hue2rgb=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p;};const q=l<0.5?l*(1+s):l+s-l*s;const p=2*l-q;r=hue2rgb(p,q,h+1/3);g=hue2rgb(p,q,h);b=hue2rgb(p,q,h-1/3);}return `rgb(${Math.round(r*255)},${Math.round(g*255)},${Math.round(b*255)})`;}
 
-// Helper to generate vibrant/pastel colors based on theme
 function getCustomColor(colorInput, targetSaturation, targetLightness) {
   let r, g, b;
   if(colorInput.startsWith('rgb')){
@@ -52,7 +50,6 @@ function getContrastTextColor(rgbString) {
   return brightness > 128 ? 'black' : 'white';
 }
 
-// Generates the SVG Blob shapes
 function generateWavyBlob(svg, baseColor, isDark){
   const lightness = isDark ? 0.30 : 0.75; 
   const blobColor = getCustomColor(baseColor, 1.0, lightness);
@@ -98,7 +95,7 @@ let isFirstLoad = true;
 function applyTheme() {
   const isDark = darkModeQuery.matches;
 
-  // A. Page Body Update
+  // A. Page Body
   const bodyBg = isDark ? '#121212' : '#ffffff';
   const bodyColor = isDark ? '#ffffff' : '#000000';
   document.body.style.backgroundColor = bodyBg;
@@ -108,36 +105,27 @@ function applyTheme() {
   const stickyNav = document.querySelector('.sticky-nav');
   if(stickyNav) {
       stickyNav.style.backgroundColor = bodyBg;
+      // REMOVED shadow from transition
       stickyNav.style.transition = isFirstLoad ? 'none' : 'background-color 1s ease';
   }
 
-  // C. Christmas Red Title Logic
-  // Targeting the H1 inside the sticky nav
+  // C. Title Background
   const title = document.querySelector('.sticky-nav h1');
   if(title) {
       if(isDark) {
-          // Dark Mode: Deep Crimson Red
           title.style.backgroundColor = '#590a0a'; 
           title.style.color = '#ffffff'; 
       } else {
-          // Light Mode: Pale Candy Red
           title.style.backgroundColor = '#ffcccc'; 
           title.style.color = '#000000'; 
       }
-      
       title.style.transition = isFirstLoad ? 'none' : 'background-color 1s ease, color 1s ease';
   }
 
-  // D. Process Items
+  // D. Items
   document.querySelectorAll('.item').forEach((item, index)=>{
     const color = item.dataset.color || '#555555';
-    
-    let finalBg;
-    if (isDark) {
-        finalBg = getCustomColor(color, 1.0, 0.15);
-    } else {
-        finalBg = getCustomColor(color, 1.0, 0.90);
-    }
+    let finalBg = isDark ? getCustomColor(color, 1.0, 0.15) : getCustomColor(color, 1.0, 0.90);
     
     item.dataset.finalColor = finalBg;
     
@@ -147,10 +135,9 @@ function applyTheme() {
         item.style.backgroundColor = 'rgba(255,255,255,0)';
     }
 
-    // No transition on first load, otherwise smooth transition
     item.style.transition = isFirstLoad ? 'none' : "background-color 1s ease, opacity 0.5s ease, transform 0.5s ease";
-
     item.style.color = getContrastTextColor(finalBg);
+    
     const wrapper = item.querySelector('.image-wrapper');
     const svg = wrapper.querySelector('.shape');
     generateWavyBlob(svg, color, isDark); 
@@ -161,9 +148,7 @@ function applyTheme() {
     button.style.background = `linear-gradient(to bottom, ${btnTop}, ${btnBottom})`;
   });
 
-  // E. Reset First Load Flag
   if (isFirstLoad) {
-      // Re-enable transitions after a split second
       setTimeout(() => {
           document.body.style.transition = 'background-color 1s ease, color 1s ease';
           if(stickyNav) stickyNav.style.transition = 'background-color 1s ease';
@@ -180,22 +165,18 @@ darkModeQuery.addEventListener('change', applyTheme);
 applyTheme();
 
 
-// --- 3. Scroll Observer (Item Fade In) ---
-
+// --- 3. Scroll Observer ---
 const observer = new IntersectionObserver(entries => {
   entries.forEach((entry, i) => {
     if(entry.isIntersecting) {
       const item = entry.target;
       observer.unobserve(item);
-
       setTimeout(() => {
         item.classList.add('visible');
         item.querySelectorAll('.slide-in-left, .slide-in-right, .fade-in').forEach(child => {
             child.classList.add('visible');
         });
-        if(item.dataset.finalColor) {
-           item.style.backgroundColor = item.dataset.finalColor;
-        }
+        if(item.dataset.finalColor) item.style.backgroundColor = item.dataset.finalColor;
       }, i * 150); 
     }
   });
@@ -204,43 +185,42 @@ const observer = new IntersectionObserver(entries => {
 document.querySelectorAll('.item').forEach(el => observer.observe(el));
 
 
-// --- 4. Smooth Header Animation Logic ---
+// --- 4. Fluid Scroll Animation (No Shadow) ---
 
 const nav = document.querySelector('.sticky-nav');
-const navTitle = nav.querySelector('h1');
 
-function calculateHeroOffset() {
-  // Only run calculation on Desktop (>1024px)
-  if (window.innerWidth > 1024) {
-      const navWidth = nav.offsetWidth;
-      const titleWidth = navTitle.offsetWidth;
-      
-      // Math: Center of Container - Center of Title - Left Padding (40px)
-      const offset = (navWidth / 2) - (titleWidth / 2) - 40; 
-      
-      navTitle.style.setProperty('--hero-offset', `${offset}px`);
-  } else {
-      navTitle.style.setProperty('--hero-offset', '0px');
-  }
-}
+// CONFIGURATION
+const MAX_HEIGHT_DESKTOP = 220; 
+const MIN_HEIGHT_DESKTOP = 110; 
 
-function handleScroll() {
+const MAX_HEIGHT_MOBILE = 160; 
+const MIN_HEIGHT_MOBILE = 90;
+
+const SCROLL_RANGE = 50; 
+
+function updateNavHeight() {
   const scrollY = window.scrollY;
+  const isDesktop = window.innerWidth > 1024;
   
-  if (scrollY > 50) {
-    nav.classList.add('scrolled');
-  } else {
-    nav.classList.remove('scrolled');
-  }
+  const startHeight = isDesktop ? MAX_HEIGHT_DESKTOP : MAX_HEIGHT_MOBILE;
+  const endHeight = isDesktop ? MIN_HEIGHT_DESKTOP : MIN_HEIGHT_MOBILE;
+  
+  // Calculate percentage of scroll (0.0 to 1.0)
+  let progress = Math.min(scrollY / SCROLL_RANGE, 1);
+  progress = Math.max(progress, 0);
+  
+  // Interpolate Height
+  const currentHeight = startHeight - (progress * (startHeight - endHeight));
+  
+  // Apply Height
+  nav.style.height = `${currentHeight}px`;
+  
+  // REMOVED: Shadow logic deleted here
 }
 
-// Listen for scroll and resize
-window.addEventListener('scroll', handleScroll);
-window.addEventListener('resize', calculateHeroOffset); 
+// Attach to scroll and resize
+window.addEventListener('scroll', updateNavHeight);
+window.addEventListener('resize', updateNavHeight);
 
-// FIX: Run calculation only after fonts and layout are fully loaded
-window.addEventListener('load', calculateHeroOffset);
-
-// Run once on initial parse just in case
-calculateHeroOffset();
-handleScroll();
+// Run immediately
+updateNavHeight();

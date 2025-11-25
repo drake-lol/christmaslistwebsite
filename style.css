@@ -15,82 +15,52 @@ body {
 .sticky-nav {
   position: fixed;
   z-index: 1000;
-  height: 80px; 
+  height: 200px; /* Initial height (overridden by JS) */
+  top: 0;
+  left: 0;
+  width: 100%;
   
-  /* --- INITIAL STATE (Top of Page) --- */
-  top: 50px;           
-  width: 90%;          
-  left: 5%;            
-  border-radius: 50px; 
-  
-  /* ALIGNMENT: Desktop Default is LEFT */
   display: flex;
-  align-items: center;
-  justify-content: flex-start;
+  align-items: center; 
+  justify-content: flex-start; 
   
   padding-left: 40px; 
   padding-right: 40px;
   box-sizing: border-box; 
   
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  /* REMOVED: Shadow is now forced to none */
+  box-shadow: none !important;
 
-  /* Animate Container Shape */
-  transition: 
-    background-color 1s ease, 
-    top 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), 
-    width 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), 
-    left 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), 
-    border-radius 0.5s ease;
+  /* REMOVED: box-shadow from transition list */
+  transition: background-color 1s ease; 
 }
 
-/* --- SCROLLED STATE (Container) --- */
-.sticky-nav.scrolled {
-  top: 0;              
-  width: 100%;         
-  left: 0;
-  border-radius: 0;    
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-}
-
-/* --- TITLE ANIMATION LOGIC --- */
+/* --- TITLE STYLING --- */
 .sticky-nav h1 {
   display: inline-block;
-  border-radius: 9999px;
+  border-radius: 9999px; 
   padding: 8px 16px;
   margin: 0; 
   font-size: 2rem;
   white-space: nowrap; 
-
-  /* START STATE (Top of Page): 
-     We translate X by a CSS Variable calculated in JS.
-     This pushes the Left-Aligned text to the Center.
-  */
-  transform: translateX(var(--hero-offset, 0px));
-
   font-weight: 802;
   font-variation-settings: "slnt" 0, "wdth" 100, "GRAD" 0, "ROND" 50;
   
-  /* SMOOTH TRANSITION */
-  transition: 
-    transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1),
-    background-color 1s ease, 
-    color 1s ease;
-}
-
-/* SCROLLED STATE (Down the page):
-   We force the transform to 0. 
-   This slides the text BACK to the Left.
-   FIX: Removed !important so the transition above works.
-*/
-.sticky-nav.scrolled h1 {
-  transform: translateX(0);
+  /* DESKTOP ONLY: Nudge left by 5px */
+  transform: translateX(-5px);
+  
+  /* FORCE REMOVE SHADOWS */
+  box-shadow: none !important;
+  text-shadow: none !important;
+  
+  transition: background-color 1s ease, color 1s ease;
 }
 
 /* --- 2. Main Layout --- */
 .frame {
   margin: 10px;
   padding: 20px;
-  padding-top: 160px; 
+  padding-top: 240px; 
 }
 
 ul { list-style: none; padding: 0; margin: 0; }
@@ -233,27 +203,21 @@ ul { list-style: none; padding: 0; margin: 0; }
 
 /* --- 8. MOBILE & TABLET LAYOUT (Max-Width 1024px) --- */
 @media (max-width: 1024px) {
-  
-  /* FORCE CENTERED LAYOUT */
   .sticky-nav {
     justify-content: center !important; 
-    padding-left: 0 !important;
-    padding-right: 0 !important;
     text-align: center !important;
+    padding-left: 20px !important;
+    padding-right: 20px !important;
   }
-  
-  /* KILL THE SLIDE ANIMATION */
-  .sticky-nav h1,
-  .sticky-nav.scrolled h1 {
-    transform: none !important;
-    margin: 0 !important;
-  }
-  
-  /* Adjust mobile float positions */
-  .sticky-nav { top: 20px; width: 95%; left: 2.5%; }
-  .sticky-nav.scrolled { top: 0; width: 100%; left: 0; }
 
-  /* Stack Items Vertically */
+  .sticky-nav h1 {
+    transform: none; 
+    padding-left: 11px;
+    padding-right: 11px;
+  }
+  
+  .frame { padding-top: 200px; }
+  
   .slide-container,
   .item.align-right .slide-container {
     display: flex !important;
