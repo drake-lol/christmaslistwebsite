@@ -89,7 +89,7 @@ body::-webkit-scrollbar {
   max-width: 100%; 
   text-align: left; /* Desktop Default */
 
-  font-weight: 802;
+  font-weight: 800;
   font-variation-settings: "slnt" 0, "wdth" 100, "GRAD" 0, "ROND" 50;
   
   transform: none;
@@ -184,8 +184,8 @@ ul { list-style: none; padding: 0; margin: 0; }
   font-size: 1.87rem; 
   margin: 0 0 8px 0; 
   font-family: "Google Sans Flex", sans-serif;
-  font-weight: 802;
-  font-variation-settings: "slnt" 0, "wdth" 100, "GRAD" 0, "ROND" 50;
+  font-weight: 800;
+  font-variation-settings: "slnt" 0, "wdth" 125, "GRAD" 0, "ROND" 50;
   letter-spacing: -0.01em;
 }
 
