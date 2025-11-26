@@ -33,6 +33,7 @@ function hslToRgb(h,s,l){let r,g,b;if(s===0)r=g=b=l;else{const hue2rgb=(p,q,t)=>
 
 function getCustomColor(colorInput, targetSaturation, targetLightness) {
   let r, g, b;
+  // Parse RGB or Hex
   if(colorInput.startsWith('rgb')){
     [r,g,b] = colorInput.match(/\d+/g).map(Number);
   } else {
@@ -40,8 +41,34 @@ function getCustomColor(colorInput, targetSaturation, targetLightness) {
     const rgbStr = hexToRgb(hex);
     [r,g,b] = rgbStr.match(/\d+/g).map(Number);
   }
-  const [h,s,l] = rgbToHsl(r,g,b);
-  return hslToRgb(h, targetSaturation, targetLightness);
+  
+  // Get current HSL
+  const [h, s, l] = rgbToHsl(r, g, b);
+  
+  // --- LOGIC CHANGE START ---
+  
+  let finalS, finalL;
+
+  // 1. Handle Grayscale (The "Red" Bug Fix)
+  // If the input saturation is extremely low (or 0), force output saturation to 0.
+  // This prevents White/Black/Gray from turning Red.
+  if (s < 0.01) {
+    finalS = 0; 
+  } else {
+    // 2. Saturation Influence
+    // Instead of forcing targetSaturation (1.0), average it with the input saturation.
+    // This allows pastel colors to stay softer than neon colors.
+    finalS = (s + targetSaturation) / 2;
+  }
+
+  // 3. Lightness Influence
+  // We prioritize targetLightness (0.8 weight) to ensure the theme (dark/light) 
+  // remains readable, but allow the original lightness (0.2 weight) to subtly tint it.
+  finalL = (l * 0.2) + (targetLightness * 0.8);
+
+  // --- LOGIC CHANGE END ---
+
+  return hslToRgb(h, finalS, finalL);
 }
 
 function getContrastTextColor(rgbString) {
@@ -50,40 +77,76 @@ function getContrastTextColor(rgbString) {
   return brightness > 128 ? 'black' : 'white';
 }
 
-function generateWavyBlob(svg, baseColor, isDark){
-  const lightness = isDark ? 0.30 : 0.75; 
+function generateWavyBlob(svg, baseColor, isDark) {
+  // 1. Calculate the color (using your updated logic)
+  const lightness = isDark ? 0.30 : 0.75;
   const blobColor = getCustomColor(baseColor, 1.0, lightness);
 
-  const points = 12, radius = 100;
-  const pathPoints = [];
-  for(let i=0;i<points;i++){
-    const angle=(i/points)*2*Math.PI;
-    const r = radius*(0.7+Math.random()*0.3);
-    const x = 100 + r*Math.cos(angle);
-    const y = 100 + r*Math.sin(angle);
-    pathPoints.push([x,y]);
-  }
-  let d="";
-  for(let i=0;i<points;i++){
-    const p0=pathPoints[(i-1+points)%points], p1=pathPoints[i], p2=pathPoints[(i+1)%points], p3=pathPoints[(i+2)%points];
-    const cp1x=p1[0]+(p2[0]-p0[0])/6, cp1y=p1[1]+(p2[1]-p0[1])/6;
-    const cp2x=p2[0]-(p3[0]-p1[0])/6, cp2y=p2[1]-(p3[1]-p1[1])/6;
-    if(i===0)d+=`M ${p1[0]} ${p1[1]} `;
-    d+=`C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2[0]} ${p2[1]} `;
-  }
-  d+="Z";
-  
-  svg.innerHTML = '';
+  // 2. Cleanup: Stop any previous animation on this SVG to prevent "fast-forward" glitches
+  if (svg.blobAnimationId) cancelAnimationFrame(svg.blobAnimationId);
+
+  // 3. Setup the static SVG structure (Gradient)
   const uniqueId = Math.random().toString(36).substr(2, 9);
   const gradientId = `grad-${uniqueId}`;
   
-  svg.innerHTML=`<defs>
+  svg.innerHTML = `<defs>
       <linearGradient id="${gradientId}" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stop-color="${blobColor}" stop-opacity="0.5"/>
         <stop offset="100%" stop-color="${blobColor}" stop-opacity="0.5"/>
       </linearGradient>
     </defs>
-    <path d="${d}" fill="url(#${gradientId})"/>`;
+    <path fill="url(#${gradientId})"/>`;
+
+  const path = svg.querySelector('path');
+
+  // 4. Animation Configuration
+  const points = 12;
+  const center = 100;
+  // Give each point a random starting "offset" so they move independently
+  const offsets = Array.from({length: points}, () => Math.random() * 10);
+
+  function animate() {
+    // Uses current time to drive the sine wave
+    const time = Date.now() * 0.00075; 
+    const pathPoints = [];
+
+    // Calculate dynamic points
+    for(let i=0; i<points; i++){
+      const angle = (i/points) * 2 * Math.PI;
+      // Oscillate radius between ~65px and ~95px using Math.sin
+      const r = 100 * (0.8 + 0.15 * Math.sin(time + offsets[i]));
+      
+      const x = center + r * Math.cos(angle);
+      const y = center + r * Math.sin(angle);
+      pathPoints.push([x,y]);
+    }
+
+    // Connect points with smooth Bezier curves
+    let d="";
+    for(let i=0; i<points; i++){
+      const p0 = pathPoints[(i-1+points)%points];
+      const p1 = pathPoints[i];
+      const p2 = pathPoints[(i+1)%points];
+      const p3 = pathPoints[(i+2)%points];
+
+      const cp1x = p1[0] + (p2[0]-p0[0])/6;
+      const cp1y = p1[1] + (p2[1]-p0[1])/6;
+
+      const cp2x = p2[0] - (p3[0]-p1[0])/6;
+      const cp2y = p2[1] - (p3[1]-p1[1])/6;
+
+      if(i===0) d += `M ${p1[0]} ${p1[1]} `;
+      d += `C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2[0]} ${p2[1]} `;
+    }
+    d += "Z";
+
+    path.setAttribute('d', d);
+    
+    // Store the ID so we can cancel it if the theme changes
+    svg.blobAnimationId = requestAnimationFrame(animate);
+  }
+
+  animate();
 }
 
 
