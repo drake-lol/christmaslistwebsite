@@ -33,7 +33,7 @@ function hslToRgb(h,s,l){let r,g,b;if(s===0)r=g=b=l;else{const hue2rgb=(p,q,t)=>
 
 function getCustomColor(colorInput, targetSaturation, targetLightness) {
   let r, g, b;
-  // Parse RGB or Hex
+  
   if(colorInput.startsWith('rgb')){
     [r,g,b] = colorInput.match(/\d+/g).map(Number);
   } else {
@@ -42,31 +42,21 @@ function getCustomColor(colorInput, targetSaturation, targetLightness) {
     [r,g,b] = rgbStr.match(/\d+/g).map(Number);
   }
   
-  // Get current HSL
   const [h, s, l] = rgbToHsl(r, g, b);
-  
-  // --- LOGIC CHANGE START ---
   
   let finalS, finalL;
 
-  // 1. Handle Grayscale (The "Red" Bug Fix)
-  // If the input saturation is extremely low (or 0), force output saturation to 0.
-  // This prevents White/Black/Gray from turning Red.
-  if (s < 0.01) {
+  // 1. Saturation Logic (UPDATED: 80% Input / 20% Target)
+  if (s === 0) {
     finalS = 0; 
   } else {
-    // 2. Saturation Influence
-    // Instead of forcing targetSaturation (1.0), average it with the input saturation.
-    // This allows pastel colors to stay softer than neon colors.
-    finalS = (s + targetSaturation) / 2;
+    // Input color (s) has 80% influence, Target color has 20% influence.
+    finalS = (s * 0.8) + (targetSaturation * 0.2);
   }
 
-  // 3. Lightness Influence
-  // We prioritize targetLightness (0.8 weight) to ensure the theme (dark/light) 
-  // remains readable, but allow the original lightness (0.2 weight) to subtly tint it.
-  finalL = (l * 0.2) + (targetLightness * 0.8);
-
-  // --- LOGIC CHANGE END ---
+  // 2. Lightness/Value Logic (80% Input / 20% Target)
+  // This remains the same as your previous request.
+  finalL = (l * 0.7) + (targetLightness * 0.3);
 
   return hslToRgb(h, finalS, finalL);
 }
@@ -77,43 +67,36 @@ function getContrastTextColor(rgbString) {
   return brightness > 128 ? 'black' : 'white';
 }
 
-function generateWavyBlob(svg, baseColor, isDark) {
-  // 1. Calculate the color (using your updated logic)
-  const lightness = isDark ? 0.30 : 0.75;
+function generateWavyBlob(svg, baseColor, isDark){
+  // CHANGED: Lightness adjusted for higher contrast (0.40 in dark, 0.60 in light)
+  const lightness = isDark ? 0.40 : 0.60; 
   const blobColor = getCustomColor(baseColor, 1.0, lightness);
 
-  // 2. Cleanup: Stop any previous animation on this SVG to prevent "fast-forward" glitches
   if (svg.blobAnimationId) cancelAnimationFrame(svg.blobAnimationId);
 
-  // 3. Setup the static SVG structure (Gradient)
   const uniqueId = Math.random().toString(36).substr(2, 9);
   const gradientId = `grad-${uniqueId}`;
   
-  svg.innerHTML = `<defs>
+  svg.innerHTML=`<defs>
       <linearGradient id="${gradientId}" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="${blobColor}" stop-opacity="0.5"/>
-        <stop offset="100%" stop-color="${blobColor}" stop-opacity="0.5"/>
+        <stop offset="0%" stop-color="${blobColor}" stop-opacity="0.8"/> 
+        <stop offset="100%" stop-color="${blobColor}" stop-opacity="0.8"/> 
       </linearGradient>
     </defs>
     <path fill="url(#${gradientId})"/>`;
 
   const path = svg.querySelector('path');
 
-  // 4. Animation Configuration
   const points = 12;
   const center = 100;
-  // Give each point a random starting "offset" so they move independently
   const offsets = Array.from({length: points}, () => Math.random() * 10);
 
   function animate() {
-    // Uses current time to drive the sine wave
     const time = Date.now() * 0.00075; 
     const pathPoints = [];
 
-    // Calculate dynamic points
     for(let i=0; i<points; i++){
       const angle = (i/points) * 2 * Math.PI;
-      // Oscillate radius between ~65px and ~95px using Math.sin
       const r = 100 * (0.8 + 0.15 * Math.sin(time + offsets[i]));
       
       const x = center + r * Math.cos(angle);
@@ -121,7 +104,6 @@ function generateWavyBlob(svg, baseColor, isDark) {
       pathPoints.push([x,y]);
     }
 
-    // Connect points with smooth Bezier curves
     let d="";
     for(let i=0; i<points; i++){
       const p0 = pathPoints[(i-1+points)%points];
@@ -141,8 +123,6 @@ function generateWavyBlob(svg, baseColor, isDark) {
     d += "Z";
 
     path.setAttribute('d', d);
-    
-    // Store the ID so we can cancel it if the theme changes
     svg.blobAnimationId = requestAnimationFrame(animate);
   }
 
@@ -194,19 +174,25 @@ function applyTheme() {
   // D. Items
   document.querySelectorAll('.item').forEach((item, index)=>{
     const color = item.dataset.color || '#555555';
+    // Calculate the full-opacity RGB color first
     let finalBg = isDark ? getCustomColor(color, 1.0, 0.15) : getCustomColor(color, 1.0, 0.90);
     
-    item.dataset.finalColor = finalBg;
+    // NEW: Convert the RGB color to RGBA with 60% (0.6) opacity
+    let finalBgTransparent = finalBg.replace('rgb', 'rgba').replace(')', ', 0.6)');
+
+    // Store the transparent color so the scroll observer applies it when visible
+    item.dataset.finalColor = finalBgTransparent;
     
     if (item.classList.contains('visible')) {
-        item.style.backgroundColor = finalBg;
+        item.style.backgroundColor = finalBgTransparent; // Apply 60% opacity background
     } else {
         item.style.backgroundColor = 'rgba(255,255,255,0)';
     }
 
-    item.style.color = getContrastTextColor(finalBg);
+    // IMPORTANT: Use the original full-opacity color (finalBg) for the contrast check
+    item.style.color = getContrastTextColor(finalBg); 
     
-    // Logic: If first load, only keep scroll animations. If theme switch, include background transition.
+    // Logic for wavy blob and button (no change here)
     const scrollTrans = "opacity 0.5s ease, transform 0.5s ease";
     item.style.transition = isFirstLoad ? scrollTrans : `background-color 1s ease, ${scrollTrans}`;
 
@@ -218,6 +204,14 @@ function applyTheme() {
     const btnTop = getCustomColor(color, 0.9, 0.65);    
     const btnBottom = getCustomColor(color, 1.0, 0.45); 
     button.style.background = `linear-gradient(to bottom, ${btnTop}, ${btnBottom})`;
+    
+    const iconColor = getContrastTextColor(btnBottom);
+    button.style.color = iconColor;
+    
+    const buyIcon = button.firstElementChild;
+    if (buyIcon) {
+        buyIcon.style.filter = iconColor === 'black' ? 'invert(1)' : 'none';
+    }
   });
 
   if (isFirstLoad) {
